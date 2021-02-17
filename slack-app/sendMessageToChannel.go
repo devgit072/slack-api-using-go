@@ -7,7 +7,7 @@ import (
 
 const (
 	token     = "<>"
-	channelId = "C01MZ6570MD"
+	channelId = "<>"
 )
 
 type SlackMessage struct {
