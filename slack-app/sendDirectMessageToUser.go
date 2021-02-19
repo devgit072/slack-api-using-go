@@ -5,28 +5,32 @@ import (
 	"log"
 )
 
-/*
-You can use http://davestevens.github.io/slack-message-builder/ to preview your slack message.
-*/
-func (sm *SlackMessage) PostMessageToChannel() error {
+func (sm *SlackMessage) SendDirectMessage() error {
 	api := slack.New(token)
 	attachment := slack.Attachment{
 		Title:   sm.Title,
 		Text:    sm.Text,
 		Pretext: sm.Pretext,
 	}
-
-	// Though it is not required and it can add a bit of latency in this function, but just to demonstrate how to get
-	// a channel details, we use this code snippet.
-	channel, err := api.GetConversationInfo(sm.ChannelId, true)
+	user, err := api.GetUserByEmail(sm.UserEmail)
 	if err != nil {
-		log.Fatalf("Error while fetching channel details: %s", err.Error())
+		log.Fatalf("Error: %s", err.Error())
+		return err
 	}
-	log.Printf("Channel details, Name: %s, ChannelId: %s", channel.Name, channel.ID)
-
+	log.Printf("User details: %s", user.Name)
+	// now send message
+	openConvParam := slack.OpenConversationParameters{
+		ReturnIM: true,
+		Users:    []string{user.ID},
+	}
+	ch, _, _, err := api.OpenConversation(&openConvParam)
+	if err != nil {
+		log.Fatalf("Error: %s", err.Error())
+		return err
+	}
 	// Now we have all details. Lets post the message in slack channel.
 	resp, timestamp, err := api.PostMessage(
-		sm.ChannelId,
+		ch.ID,
 		slack.MsgOptionText(sm.MsgOptionText, true),
 		slack.MsgOptionAttachments(attachment),
 		slack.MsgOptionAsUser(true),
